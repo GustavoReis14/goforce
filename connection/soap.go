@@ -62,7 +62,7 @@ func (c *Client) loginSoap() {
 			<n1:password><![CDATA[%s]]></n1:password>
 			</n1:login>
 		</env:Body>
-		</env:Envelope>`, c.userInfo.Username, (c.userInfo.Password))
+		</env:Envelope>`, c.userInfo.Username, (c.userInfo.Password + c.userInfo.SecretToken))
 
 	fmt.Println(rawPayload)
 	payload := strings.NewReader(rawPayload)
