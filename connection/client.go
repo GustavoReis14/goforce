@@ -7,7 +7,7 @@ const (
 	API_VERSION = "61.0"
 )
 
-type userInfo struct {
+type user struct {
 	username, password, secretToken string
 }
 
@@ -19,7 +19,7 @@ type Client struct {
 	loginUrl, apiVersion string
 	protocol             int8
 	connection           *Result
-	userInfo             userInfo
+	userInfo             user
 	oauth2               oauth2
 }
 
@@ -57,16 +57,18 @@ func (c *Client) SetLoginUrl(url string) {
 	c.loginUrl = url
 }
 
-func (c *Client) Login(protocol int8) error {
+/*
+Login method expect the following protocols:
+  - LOGIN_PROTOCOL_SOAP
+*/
+func (c *Client) Login(protocol int8) (UserInfo, error) {
 	switch protocol {
 	case LOGIN_PROTOCOL_SOAP:
-		res, err := c.loginSoap()
+		err := c.loginSoap()
 		if err != nil {
-			return err
-		} else {
-			c.connection = res
+			return UserInfo{}, err
 		}
 	}
 
-	return nil
+	return c.connection.UserInfo, nil
 }
