@@ -1,19 +1,24 @@
-package connection
+package rest
 
 import (
 	"fmt"
+	con "goforce/connection"
 	"io"
 	"net/http"
 	"strings"
 )
 
-func (c *Client) Query(soql string) {
+const (
+	queryPath = "/services/data/v"
+)
+
+func Query(c con.Client, soql string) {
 	if soql == "" {
 		return
 	}
 
 	client := &http.Client{}
-	url := c.instance + qUERY_PATH + c.apiVersion + "/query?q=" + strings.ReplaceAll(soql, " ", "+")
+	url := c.Instance + queryPath + c.ApiVersion + "/query?q=" + strings.ReplaceAll(soql, " ", "+")
 
 	req, err := http.NewRequest("GET", url, nil)
 
@@ -22,7 +27,7 @@ func (c *Client) Query(soql string) {
 		return
 	}
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Set("Authorization", c.token)
+	req.Header.Set("Authorization", c.Token)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -36,5 +41,5 @@ func (c *Client) Query(soql string) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(body)
+	fmt.Println(string(body))
 }

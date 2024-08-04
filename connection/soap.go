@@ -116,7 +116,7 @@ func (c *Client) loginSoap() (UserInfo, error) {
 	payload := strings.NewReader(rawPayload)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", (c.loginUrl + lOGIN_PROTOCOL_SOAP_PATH + c.apiVersion), payload)
+	req, err := http.NewRequest("POST", (c.loginUrl + lOGIN_PROTOCOL_SOAP_PATH + c.ApiVersion), payload)
 
 	if err != nil {
 		return UserInfo{}, err
@@ -139,8 +139,8 @@ func (c *Client) loginSoap() (UserInfo, error) {
 	envelope := envelope{}
 	xml.Unmarshal([]byte(body), &envelope)
 
-	c.token = "Bearer " + envelope.Body.LoginResponse.Result.SessionId
-	c.instance = strings.Split(envelope.Body.LoginResponse.Result.ServerUrl, "/services")[0]
+	c.Token = "Bearer " + envelope.Body.LoginResponse.Result.SessionId
+	c.Instance = strings.Split(envelope.Body.LoginResponse.Result.ServerUrl, "/services")[0]
 	if res.StatusCode != http.StatusOK {
 		return UserInfo{}, fmt.Errorf("%s", envelope.Body.Fault.FaultString)
 	}

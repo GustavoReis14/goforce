@@ -24,13 +24,12 @@ type oauth2 struct {
 }
 
 type Client struct {
-	loginUrl, apiVersion string
-	protocol             int8
-	user                 user
-	oauth2               oauth2
+	loginUrl string
+	protocol int8
+	user     user
+	oauth2   oauth2
 
-	token    string
-	instance string
+	Token, ApiVersion, Instance string
 }
 
 func (c *Client) SetUserInfo(userInfos ...string) {
@@ -43,7 +42,7 @@ func (c *Client) SetUserInfo(userInfos ...string) {
 		c.user.secretToken = userInfos[2]
 	}
 
-	c.apiVersion = API_VERSION
+	c.ApiVersion = API_VERSION
 	c.loginUrl = PROD_URL
 	c.protocol = LOGIN_PROTOCOL_SOAP
 }
@@ -60,7 +59,7 @@ func (c *Client) SetClientCredentials(oauth2 ...string) {
 }
 
 func (c *Client) SetApiVersion(version string) {
-	c.apiVersion = version
+	c.ApiVersion = version
 }
 
 func (c *Client) SetLoginUrl(url string) {

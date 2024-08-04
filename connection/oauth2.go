@@ -83,8 +83,8 @@ func (c *Client) loginOAuth2() error {
 		return nil
 	}
 
-	c.token = response.TokenType + " " + response.Token
-	c.instance = response.InstanceUrl
+	c.Token = response.TokenType + " " + response.Token
+	c.Instance = response.InstanceUrl
 
 	return nil
 }
