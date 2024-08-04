@@ -116,7 +116,7 @@ func (c *Client) loginSoap() (UserInfo, error) {
 	payload := strings.NewReader(rawPayload)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", (c.loginUrl + LOGIN_PROTOCOL_SOAP_PATH + c.apiVersion), payload)
+	req, err := http.NewRequest("POST", (c.loginUrl + lOGIN_PROTOCOL_SOAP_PATH + c.apiVersion), payload)
 
 	if err != nil {
 		return UserInfo{}, err

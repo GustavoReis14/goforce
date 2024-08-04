@@ -54,7 +54,7 @@ func (c *Client) loginOAuth2() error {
 	payload := strings.NewReader(rawPayload)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", (c.loginUrl + LOGIN_PROTOCOL_OAUTH2_PATH), payload)
+	req, err := http.NewRequest("POST", (c.loginUrl + lOGIN_PROTOCOL_OAUTH2_PATH), payload)
 
 	if err != nil {
 		fmt.Println(err)

@@ -9,8 +9,10 @@ const (
 	LOGIN_PROTOCOL_SOAP   = 0
 	LOGIN_PROTOCOL_OAUTH2 = 1
 
-	LOGIN_PROTOCOL_SOAP_PATH   = "/services/Soap/u/"
-	LOGIN_PROTOCOL_OAUTH2_PATH = "/services/oauth2/token"
+	lOGIN_PROTOCOL_SOAP_PATH   = "/services/Soap/u/"
+	lOGIN_PROTOCOL_OAUTH2_PATH = "/services/oauth2/token"
+
+	qUERY_PATH = "/services/data/v"
 )
 
 type user struct {
@@ -67,7 +69,7 @@ func (c *Client) SetLoginUrl(url string) {
 
 /*
 Login method expect the following protocols:
-  - LOGIN_PROTOCOL_SOAP
+  - LOGIN_PROTOCOL_SOAP -> return UserInfo
   - LOGIN_PROTOCOL_OAUTH2
 */
 func (c *Client) Login(protocol int8) (UserInfo, error) {
