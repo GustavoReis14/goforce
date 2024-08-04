@@ -1,53 +1,41 @@
 package connection
 
 import (
+	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 )
 
 const (
-	PROD_URL    = "https://login.salesforce.com"
-	SANDBOX_URL = "https://test.salesforce.com"
-
 	LOGIN_PROTOCOL_SOAP      = 1
 	LOGIN_PROTOCOL_SOAP_PATH = "/services/Soap/u/"
 )
+
+type envelope struct {
+	XMLName xml.Name `xml:"Envelope"`
+	Body    struct {
+		LoginResponse LoginResponse `xml:"loginResponse"`
+	}
+}
+
+type LoginResponse struct {
+	Result Result `xml:"result"`
+}
+
+type Result struct {
+	MetadataServerUrl string `xml:"metadataServerUrl"`
+	ServerUrl         string `xml:"serverUrl"`
+	SessionId         string `xml:"sessionId"`
+	UserId            string `xml:"userId"`
+}
 
 type UserInfo struct {
 	Username, Password, SecretToken string
 }
 
-type Client struct {
-	userInfo             UserInfo
-	loginUrl, apiVersion string
-	protocol             int8
-}
-
-func (c *Client) SetUserInfo(info UserInfo) {
-	c.userInfo = info
-	c.apiVersion = "61.0"
-	c.loginUrl = SANDBOX_URL
-	c.protocol = LOGIN_PROTOCOL_SOAP
-}
-
-func (c *Client) SetApiVersion(version string) {
-	c.apiVersion = version
-}
-
-func (c *Client) SetLoginUrl(url string) {
-	c.loginUrl = url
-}
-
-func (c *Client) Login(protocol int8) {
-	switch protocol {
-	case LOGIN_PROTOCOL_SOAP:
-		c.loginSoap()
-	}
-}
-
-func (c *Client) loginSoap() {
+func (c *Client) loginSoap() (*Result, error) {
 	url := c.loginUrl + LOGIN_PROTOCOL_SOAP_PATH + c.apiVersion
 	method := "POST"
 
@@ -64,15 +52,13 @@ func (c *Client) loginSoap() {
 		</env:Body>
 		</env:Envelope>`, c.userInfo.Username, (c.userInfo.Password + c.userInfo.SecretToken))
 
-	fmt.Println(rawPayload)
 	payload := strings.NewReader(rawPayload)
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		return &Result{}, err
 	}
 	req.Header.Add("Content-Type", "text/xml; charset=UTF-8")
 	req.Header.Add("SOAPAction", "login")
@@ -80,15 +66,17 @@ func (c *Client) loginSoap() {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return &Result{}, err
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return &Result{}, err
 	}
-	fmt.Println(string(body))
+
+	var envelope envelope
+	xml.Unmarshal([]byte(body), &envelope)
+
+	return &envelope.Body.LoginResponse.Result, nil
 }
