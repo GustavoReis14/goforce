@@ -74,15 +74,15 @@ type UserInfo struct {
 
 func (c *Client) validateSoapInput() error {
 	expectedFields := []string{}
-	if c.userInfo.username == "" {
+	if c.user.username == "" {
 		expectedFields = append(expectedFields, "username")
 	}
 
-	if c.userInfo.password == "" {
+	if c.user.password == "" {
 		expectedFields = append(expectedFields, "password")
 	}
 
-	if c.userInfo.secretToken == "" {
+	if c.user.secretToken == "" {
 		expectedFields = append(expectedFields, "secretToken")
 	}
 
@@ -94,10 +94,10 @@ func (c *Client) validateSoapInput() error {
 
 }
 
-func (c *Client) loginSoap() error {
+func (c *Client) loginSoap() (UserInfo, error) {
 	err := c.validateSoapInput()
 	if err != nil {
-		return err
+		return UserInfo{}, err
 	}
 
 	rawPayload := fmt.Sprintf(
@@ -111,7 +111,7 @@ func (c *Client) loginSoap() error {
 			<n1:password><![CDATA[%s]]></n1:password>
 			</n1:login>
 		</env:Body>
-		</env:Envelope>`, c.userInfo.username, (c.userInfo.password + c.userInfo.secretToken))
+		</env:Envelope>`, c.user.username, (c.user.password + c.user.secretToken))
 
 	payload := strings.NewReader(rawPayload)
 
@@ -119,7 +119,7 @@ func (c *Client) loginSoap() error {
 	req, err := http.NewRequest("POST", (c.loginUrl + LOGIN_PROTOCOL_SOAP_PATH + c.apiVersion), payload)
 
 	if err != nil {
-		return err
+		return UserInfo{}, err
 	}
 	req.Header.Add("Content-Type", "text/xml; charset=UTF-8")
 	req.Header.Add("SOAPAction", "login")
@@ -127,22 +127,22 @@ func (c *Client) loginSoap() error {
 
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return UserInfo{}, err
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return UserInfo{}, err
 	}
 
 	envelope := envelope{}
 	xml.Unmarshal([]byte(body), &envelope)
 
-	c.soapResponse = &envelope.Body.LoginResponse.Result
-
+	c.token = "Bearer " + envelope.Body.LoginResponse.Result.SessionId
+	c.instance = strings.Split(envelope.Body.LoginResponse.Result.ServerUrl, "/services")[0]
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("%s", envelope.Body.Fault.FaultString)
+		return UserInfo{}, fmt.Errorf("%s", envelope.Body.Fault.FaultString)
 	}
-	return nil
+	return envelope.Body.LoginResponse.Result.UserInfo, nil
 }

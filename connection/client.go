@@ -24,21 +24,21 @@ type oauth2 struct {
 type Client struct {
 	loginUrl, apiVersion string
 	protocol             int8
-	userInfo             user
+	user                 user
 	oauth2               oauth2
 
-	oauth2Reponse *oauth2Response
-	soapResponse  *soapResponse
+	token    string
+	instance string
 }
 
 func (c *Client) SetUserInfo(userInfos ...string) {
 	if len(userInfos) >= 2 {
-		c.userInfo.username = userInfos[0]
-		c.userInfo.password = userInfos[1]
+		c.user.username = userInfos[0]
+		c.user.password = userInfos[1]
 	}
 
 	if len(userInfos) >= 3 {
-		c.userInfo.secretToken = userInfos[2]
+		c.user.secretToken = userInfos[2]
 	}
 
 	c.apiVersion = API_VERSION
@@ -73,9 +73,9 @@ Login method expect the following protocols:
 func (c *Client) Login(protocol int8) (UserInfo, error) {
 	switch protocol {
 	case LOGIN_PROTOCOL_SOAP:
-		err := c.loginSoap()
+		userInfo, err := c.loginSoap()
 		if err != nil {
-			return UserInfo{}, err
+			return userInfo, err
 		}
 	case LOGIN_PROTOCOL_OAUTH2:
 		err := c.loginOAuth2()

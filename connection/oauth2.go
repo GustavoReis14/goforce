@@ -19,11 +19,11 @@ type oauth2Response struct {
 
 func (c *Client) validateOAuthInput() error {
 	expectedFields := []string{}
-	if c.userInfo.username == "" {
+	if c.user.username == "" {
 		expectedFields = append(expectedFields, "username")
 	}
 
-	if c.userInfo.password == "" {
+	if c.user.password == "" {
 		expectedFields = append(expectedFields, "password")
 	}
 
@@ -50,7 +50,7 @@ func (c *Client) loginOAuth2() error {
 
 	rawPayload := fmt.Sprintf(
 		"grant_type=password&client_id=%s&client_secret=%s&username=%s&password=%s",
-		c.oauth2.clientId, c.oauth2.clientSecret, c.userInfo.username, (c.userInfo.password + c.userInfo.secretToken))
+		c.oauth2.clientId, c.oauth2.clientSecret, c.user.username, (c.user.password + c.user.secretToken))
 	payload := strings.NewReader(rawPayload)
 
 	client := &http.Client{}
@@ -83,7 +83,8 @@ func (c *Client) loginOAuth2() error {
 		return nil
 	}
 
-	c.oauth2Reponse = &response
+	c.token = response.TokenType + " " + response.Token
+	c.instance = response.InstanceUrl
 
 	return nil
 }
