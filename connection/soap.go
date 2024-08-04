@@ -26,18 +26,67 @@ type LoginResponse struct {
 
 type Result struct {
 	MetadataServerUrl string `xml:"metadataServerUrl"`
+	PasswordExpired   bool   `xml:"passwordExpired"`
+	Sandbox           bool   `xml:"sandbox"`
 	ServerUrl         string `xml:"serverUrl"`
 	SessionId         string `xml:"sessionId"`
 	UserId            string `xml:"userId"`
+	UserInfo          struct {
+		XMLName                    xml.Name `xml:"userInfo"`
+		AccessibilityMode          bool     `xml:"accessibilityMode"`
+		ChatterExternal            bool     `xml:"chatterExternal"`
+		CurrencySymbol             string   `xml:"currencySymbol"`
+		OrgAttachmentFileSizeLimit int      `xml:"orgAttachmentFileSizeLimit"`
+		OrgDefaultCurrencyIsoCode  string   `xml:"orgDefaultCurrencyIsoCode"`
+		OrgDefaultCurrencyLocale   string   `xml:"orgDefaultCurrencyLocale"`
+		OrgDisallowHtmlAttachments bool     `xml:"orgDisallowHtmlAttachments"`
+		OrgHasPersonAccounts       bool     `xml:"orgHasPersonAccounts"`
+		OrganizationId             string   `xml:"organizationId"`
+		OrganizationMultiCurrency  bool     `xml:"organizationMultiCurrency"`
+		OrganizationName           string   `xml:"organizationName"`
+		ProfileId                  string   `xml:"profileId"`
+		RoleId                     *string  `xml:"roleId,omitempty"`
+		SessionSecondsValid        int      `xml:"sessionSecondsValid"`
+		UserDefaultCurrencyIsoCode *string  `xml:"userDefaultCurrencyIsoCode,omitempty"`
+		UserEmail                  string   `xml:"userEmail"`
+		UserFullName               string   `xml:"userFullName"`
+		UserId                     string   `xml:"userId"`
+		UserLanguage               string   `xml:"userLanguage"`
+		UserLocale                 string   `xml:"userLocale"`
+		UserName                   string   `xml:"userName"`
+		UserTimeZone               string   `xml:"userTimeZone"`
+		UserType                   string   `xml:"userType"`
+		UserUiSkin                 string   `xml:"userUiSkin"`
+	}
 }
 
-type UserInfo struct {
-	Username, Password, SecretToken string
+func (c *Client) validateSoapInput() error {
+	expectedFields := []string{}
+	if c.userInfo.username == "" {
+		expectedFields = append(expectedFields, "username")
+	}
+
+	if c.userInfo.password == "" {
+		expectedFields = append(expectedFields, "password")
+	}
+
+	if c.userInfo.secretToken == "" {
+		expectedFields = append(expectedFields, "secretToken")
+	}
+
+	if len(expectedFields) > 1 {
+		return fmt.Errorf("required info are missing\nexpected values: %s", expectedFields)
+	}
+
+	return nil
+
 }
 
 func (c *Client) loginSoap() (*Result, error) {
-	url := c.loginUrl + LOGIN_PROTOCOL_SOAP_PATH + c.apiVersion
-	method := "POST"
+	err := c.validateSoapInput()
+	if err != nil {
+		return nil, err
+	}
 
 	rawPayload := fmt.Sprintf(
 		`<?xml version="1.0" encoding="utf-8" ?>
@@ -50,12 +99,12 @@ func (c *Client) loginSoap() (*Result, error) {
 			<n1:password><![CDATA[%s]]></n1:password>
 			</n1:login>
 		</env:Body>
-		</env:Envelope>`, c.userInfo.Username, (c.userInfo.Password + c.userInfo.SecretToken))
+		</env:Envelope>`, c.userInfo.username, (c.userInfo.password + c.userInfo.secretToken))
 
 	payload := strings.NewReader(rawPayload)
 
 	client := &http.Client{}
-	req, err := http.NewRequest(method, url, payload)
+	req, err := http.NewRequest("POST", (c.loginUrl + LOGIN_PROTOCOL_SOAP_PATH + c.apiVersion), payload)
 
 	if err != nil {
 		return &Result{}, err
