@@ -5,6 +5,12 @@ const (
 	SANDBOX_URL = "https://test.salesforce.com"
 
 	API_VERSION = "61.0"
+
+	LOGIN_PROTOCOL_SOAP   = 0
+	LOGIN_PROTOCOL_OAUTH2 = 1
+
+	LOGIN_PROTOCOL_SOAP_PATH   = "/services/Soap/u/"
+	LOGIN_PROTOCOL_OAUTH2_PATH = "/services/oauth2/token"
 )
 
 type user struct {
@@ -18,9 +24,11 @@ type oauth2 struct {
 type Client struct {
 	loginUrl, apiVersion string
 	protocol             int8
-	connection           *Result
 	userInfo             user
 	oauth2               oauth2
+
+	oauth2Reponse *oauth2Response
+	soapResponse  *soapResponse
 }
 
 func (c *Client) SetUserInfo(userInfos ...string) {
@@ -60,6 +68,7 @@ func (c *Client) SetLoginUrl(url string) {
 /*
 Login method expect the following protocols:
   - LOGIN_PROTOCOL_SOAP
+  - LOGIN_PROTOCOL_OAUTH2
 */
 func (c *Client) Login(protocol int8) (UserInfo, error) {
 	switch protocol {
@@ -68,7 +77,12 @@ func (c *Client) Login(protocol int8) (UserInfo, error) {
 		if err != nil {
 			return UserInfo{}, err
 		}
+	case LOGIN_PROTOCOL_OAUTH2:
+		err := c.loginOAuth2()
+		if err != nil {
+			return UserInfo{}, err
+		}
 	}
 
-	return c.connection.UserInfo, nil
+	return UserInfo{}, nil
 }

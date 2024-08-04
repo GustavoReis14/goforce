@@ -8,24 +8,11 @@ import (
 	"strings"
 )
 
-const (
-	LOGIN_PROTOCOL_SOAP      = 1
-	LOGIN_PROTOCOL_SOAP_PATH = "/services/Soap/u/"
-)
-
 type envelope struct {
 	XMLName xml.Name `xml:"Envelope"`
 	Body    struct {
 		LoginResponse LoginResponse `xml:"loginResponse"`
 		Fault         Fault         `xml:"Fault"`
-	}
-}
-
-type Fault struct {
-	FaultCode   string `xml:"faultcode"`
-	FaultString string `xml:"faultstring"`
-	Detail      struct {
-		LoginFault LoginFault `xml:"LoginFault"`
 	}
 }
 
@@ -35,17 +22,26 @@ type LoginFault struct {
 }
 
 type LoginResponse struct {
-	Result Result `xml:"result"`
+	Result soapResponse `xml:"result"`
 }
 
-type Result struct {
+type soapResponse struct {
+	UserInfo UserInfo
+
 	MetadataServerUrl string `xml:"metadataServerUrl"`
 	PasswordExpired   bool   `xml:"passwordExpired"`
 	Sandbox           bool   `xml:"sandbox"`
 	ServerUrl         string `xml:"serverUrl"`
 	SessionId         string `xml:"sessionId"`
 	UserId            string `xml:"userId"`
-	UserInfo          UserInfo
+}
+
+type Fault struct {
+	FaultCode   string `xml:"faultcode"`
+	FaultString string `xml:"faultstring"`
+	Detail      struct {
+		LoginFault LoginFault `xml:"LoginFault"`
+	}
 }
 
 type UserInfo struct {
@@ -143,7 +139,7 @@ func (c *Client) loginSoap() error {
 	envelope := envelope{}
 	xml.Unmarshal([]byte(body), &envelope)
 
-	c.connection = &envelope.Body.LoginResponse.Result
+	c.soapResponse = &envelope.Body.LoginResponse.Result
 
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("%s", envelope.Body.Fault.FaultString)
